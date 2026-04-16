@@ -1,22 +1,35 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: SDR CRM API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: workspaces
+    description: Workspace operations
+  - name: leads
+    description: Lead management
+  - name: campaigns
+    description: Campaign management
+  - name: messages
+    description: AI message generation
+  - name: funnel
+    description: Funnel stage configuration
+  - name: custom-fields
+    description: Custom field management
+  - name: dashboard
+    description: Dashboard metrics
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +37,616 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── Workspaces ───────────────────────────────────────────────────────────
+  /workspaces:
+    get:
+      operationId: listWorkspaces
+      tags: [workspaces]
+      summary: List user workspaces
+      responses:
+        "200":
+          description: List of workspaces
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Workspace"
+    post:
+      operationId: createWorkspace
+      tags: [workspaces]
+      summary: Create a workspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkspaceBody"
+      responses:
+        "201":
+          description: Created workspace
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workspace"
+
+  /workspaces/{workspaceId}:
+    get:
+      operationId: getWorkspace
+      tags: [workspaces]
+      summary: Get a workspace
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Workspace details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workspace"
+        "404":
+          description: Not found
+
+  # ─── Leads ────────────────────────────────────────────────────────────────
+  /workspaces/{workspaceId}/leads:
+    get:
+      operationId: listLeads
+      tags: [leads]
+      summary: List leads in workspace
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: stage
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: assigneeId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of leads
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Lead"
+    post:
+      operationId: createLead
+      tags: [leads]
+      summary: Create a lead
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLeadBody"
+      responses:
+        "201":
+          description: Created lead
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+
+  /workspaces/{workspaceId}/leads/{leadId}:
+    get:
+      operationId: getLead
+      tags: [leads]
+      summary: Get lead details
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: leadId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lead details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateLead
+      tags: [leads]
+      summary: Update a lead
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: leadId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLeadBody"
+      responses:
+        "200":
+          description: Updated lead
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "404":
+          description: Not found
+        "422":
+          description: Stage transition validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StageValidationError"
+    delete:
+      operationId: deleteLead
+      tags: [leads]
+      summary: Delete a lead
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: leadId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── Campaigns ────────────────────────────────────────────────────────────
+  /workspaces/{workspaceId}/campaigns:
+    get:
+      operationId: listCampaigns
+      tags: [campaigns]
+      summary: List campaigns in workspace
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of campaigns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Campaign"
+    post:
+      operationId: createCampaign
+      tags: [campaigns]
+      summary: Create a campaign
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCampaignBody"
+      responses:
+        "201":
+          description: Created campaign
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+
+  /workspaces/{workspaceId}/campaigns/{campaignId}:
+    get:
+      operationId: getCampaign
+      tags: [campaigns]
+      summary: Get campaign details
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: campaignId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Campaign details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateCampaign
+      tags: [campaigns]
+      summary: Update a campaign
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: campaignId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCampaignBody"
+      responses:
+        "200":
+          description: Updated campaign
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+    delete:
+      operationId: deleteCampaign
+      tags: [campaigns]
+      summary: Delete a campaign
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: campaignId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── AI Messages ──────────────────────────────────────────────────────────
+  /workspaces/{workspaceId}/leads/{leadId}/messages:
+    get:
+      operationId: listLeadMessages
+      tags: [messages]
+      summary: List AI-generated messages for a lead
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: leadId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: campaignId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GeneratedMessage"
+
+  /workspaces/{workspaceId}/leads/{leadId}/generate-messages:
+    post:
+      operationId: generateMessages
+      tags: [messages]
+      summary: Generate AI messages for a lead with a campaign
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: leadId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateMessagesBody"
+      responses:
+        "200":
+          description: Generated messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GeneratedMessage"
+
+  /workspaces/{workspaceId}/leads/{leadId}/send-message:
+    post:
+      operationId: sendMessage
+      tags: [messages]
+      summary: Mark a message as sent (moves lead to Tentando Contato)
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: leadId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageBody"
+      responses:
+        "200":
+          description: Message sent and lead stage updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+
+  # ─── Funnel Stages ────────────────────────────────────────────────────────
+  /workspaces/{workspaceId}/funnel-stages:
+    get:
+      operationId: listFunnelStages
+      tags: [funnel]
+      summary: List funnel stages for workspace
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Funnel stages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FunnelStage"
+    post:
+      operationId: createFunnelStage
+      tags: [funnel]
+      summary: Create a funnel stage
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFunnelStageBody"
+      responses:
+        "201":
+          description: Created stage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FunnelStage"
+
+  /workspaces/{workspaceId}/funnel-stages/{stageId}:
+    patch:
+      operationId: updateFunnelStage
+      tags: [funnel]
+      summary: Update a funnel stage
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: stageId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFunnelStageBody"
+      responses:
+        "200":
+          description: Updated stage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FunnelStage"
+    delete:
+      operationId: deleteFunnelStage
+      tags: [funnel]
+      summary: Delete a funnel stage
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: stageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── Custom Fields ────────────────────────────────────────────────────────
+  /workspaces/{workspaceId}/custom-fields:
+    get:
+      operationId: listCustomFields
+      tags: [custom-fields]
+      summary: List custom fields for workspace
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Custom fields
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CustomField"
+    post:
+      operationId: createCustomField
+      tags: [custom-fields]
+      summary: Create a custom field
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomFieldBody"
+      responses:
+        "201":
+          description: Created custom field
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomField"
+
+  /workspaces/{workspaceId}/custom-fields/{fieldId}:
+    delete:
+      operationId: deleteCustomField
+      tags: [custom-fields]
+      summary: Delete a custom field
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: fieldId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── Dashboard ────────────────────────────────────────────────────────────
+  /workspaces/{workspaceId}/dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get dashboard metrics for workspace
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Dashboard metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardMetrics"
+
+  /workspaces/{workspaceId}/activity:
+    get:
+      operationId: getActivity
+      tags: [dashboard]
+      summary: Get recent activity log for workspace
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Activity events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityEvent"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +657,420 @@ components:
       required:
         - status
 
+    Workspace:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        ownerId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - ownerId
+        - createdAt
+
+    CreateWorkspaceBody:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
+
+    Lead:
+      type: object
+      properties:
+        id:
+          type: string
+        workspaceId:
+          type: string
+        name:
+          type: string
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        company:
+          type: ["string", "null"]
+        role:
+          type: ["string", "null"]
+        source:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        stage:
+          type: string
+        assigneeId:
+          type: ["string", "null"]
+        customFieldValues:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - workspaceId
+        - name
+        - stage
+        - createdAt
+        - updatedAt
+
+    CreateLeadBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        company:
+          type: ["string", "null"]
+        role:
+          type: ["string", "null"]
+        source:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        stage:
+          type: string
+        assigneeId:
+          type: ["string", "null"]
+        customFieldValues:
+          type: object
+          additionalProperties: true
+      required:
+        - name
+
+    UpdateLeadBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        company:
+          type: ["string", "null"]
+        role:
+          type: ["string", "null"]
+        source:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        stage:
+          type: string
+        assigneeId:
+          type: ["string", "null"]
+        customFieldValues:
+          type: object
+          additionalProperties: true
+
+    StageValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+        missingFields:
+          type: array
+          items:
+            type: string
+      required:
+        - error
+        - missingFields
+
+    Campaign:
+      type: object
+      properties:
+        id:
+          type: string
+        workspaceId:
+          type: string
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        context:
+          type: string
+        promptInstructions:
+          type: string
+        triggerStage:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - workspaceId
+        - name
+        - context
+        - promptInstructions
+        - isActive
+        - createdAt
+
+    CreateCampaignBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        context:
+          type: string
+        promptInstructions:
+          type: string
+        triggerStage:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+      required:
+        - name
+        - context
+        - promptInstructions
+
+    UpdateCampaignBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        context:
+          type: string
+        promptInstructions:
+          type: string
+        triggerStage:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+
+    GeneratedMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        leadId:
+          type: string
+        campaignId:
+          type: string
+        content:
+          type: string
+        status:
+          type: string
+          enum: [generated, sent]
+        sentAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - leadId
+        - campaignId
+        - content
+        - status
+        - createdAt
+
+    GenerateMessagesBody:
+      type: object
+      properties:
+        campaignId:
+          type: string
+        count:
+          type: integer
+          default: 3
+      required:
+        - campaignId
+
+    SendMessageBody:
+      type: object
+      properties:
+        messageId:
+          type: string
+      required:
+        - messageId
+
+    FunnelStage:
+      type: object
+      properties:
+        id:
+          type: string
+        workspaceId:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        order:
+          type: integer
+        color:
+          type: ["string", "null"]
+        requiredFields:
+          type: array
+          items:
+            type: string
+        isDefault:
+          type: boolean
+      required:
+        - id
+        - workspaceId
+        - name
+        - slug
+        - order
+        - isDefault
+
+    CreateFunnelStageBody:
+      type: object
+      properties:
+        name:
+          type: string
+        color:
+          type: ["string", "null"]
+        order:
+          type: integer
+        requiredFields:
+          type: array
+          items:
+            type: string
+      required:
+        - name
+
+    UpdateFunnelStageBody:
+      type: object
+      properties:
+        name:
+          type: string
+        color:
+          type: ["string", "null"]
+        order:
+          type: integer
+        requiredFields:
+          type: array
+          items:
+            type: string
+
+    CustomField:
+      type: object
+      properties:
+        id:
+          type: string
+        workspaceId:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        fieldType:
+          type: string
+          enum: [text, number, select]
+        options:
+          type: ["array", "null"]
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - workspaceId
+        - name
+        - slug
+        - fieldType
+        - createdAt
+
+    CreateCustomFieldBody:
+      type: object
+      properties:
+        name:
+          type: string
+        fieldType:
+          type: string
+          enum: [text, number, select]
+        options:
+          type: ["array", "null"]
+          items:
+            type: string
+      required:
+        - name
+        - fieldType
+
+    DashboardMetrics:
+      type: object
+      properties:
+        totalLeads:
+          type: integer
+        leadsByStage:
+          type: array
+          items:
+            $ref: "#/components/schemas/StageCount"
+        totalCampaigns:
+          type: integer
+        totalMessagesGenerated:
+          type: integer
+        totalMessagesSent:
+          type: integer
+        recentLeads:
+          type: array
+          items:
+            $ref: "#/components/schemas/Lead"
+      required:
+        - totalLeads
+        - leadsByStage
+        - totalCampaigns
+        - totalMessagesGenerated
+        - totalMessagesSent
+        - recentLeads
+
+    StageCount:
+      type: object
+      properties:
+        stage:
+          type: string
+        stageName:
+          type: string
+        count:
+          type: integer
+        color:
+          type: ["string", "null"]
+      required:
+        - stage
+        - stageName
+        - count
+
+    ActivityEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        leadId:
+          type: string
+        leadName:
+          type: string
+        eventType:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - leadId
+        - leadName
+        - eventType
+        - description
+        - createdAt

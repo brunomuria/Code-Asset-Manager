@@ -1,0 +1,185 @@
+Crie uma aplicação full stack (Node.js + Express) para um sistema chamado "CRM de SDR com geração de mensagens por IA".
+
+### 🎯 Objetivo
+
+Um mini CRM onde o usuário pode:
+
+* Criar conta e autenticar via Supabase
+* Criar e gerenciar leads
+* Criar campanhas com contexto e prompt
+* Gerar mensagens personalizadas com IA usando dados do lead
+
+---
+
+### ⚙️ Stack obrigatória
+
+* Backend: Node.js + Express
+* Banco de dados: Supabase (PostgreSQL)
+* Autenticação: Supabase Auth
+* Integração IA: OpenAI API
+* Uso de variáveis de ambiente (.env)
+
+---
+
+### 📁 Estrutura do projeto
+
+Organize o projeto assim:
+
+/src
+server.js
+supabase.js
+openai.js
+routes/
+auth.js
+leads.js
+campaigns.js
+messages.js
+
+---
+
+### 🔐 Autenticação
+
+* Implementar signup e login usando Supabase Auth
+* Retornar usuário autenticado
+* Proteger rotas básicas
+
+---
+
+### 🧱 Banco de dados (usar Supabase)
+
+Criar e usar as seguintes tabelas:
+
+1. workspaces
+
+* id (uuid)
+* name (text)
+* owner_id (uuid)
+
+2. leads
+
+* id (uuid)
+* workspace_id (uuid)
+* name (text)
+* email (text)
+* phone (text)
+* company (text)
+* role (text)
+* stage (text)
+
+3. campaigns
+
+* id (uuid)
+* workspace_id (uuid)
+* name (text)
+* context (text)
+* prompt (text)
+
+4. messages
+
+* id (uuid)
+* lead_id (uuid)
+* content (text)
+
+---
+
+### 🔗 Integração Supabase
+
+* Criar client usando @supabase/supabase-js
+* Usar variáveis:
+  SUPABASE_URL
+  SUPABASE_ANON_KEY
+
+---
+
+### 👥 Funcionalidades de Leads
+
+* Criar lead
+* Listar leads
+* Atualizar etapa (stage)
+* Associar ao workspace
+
+---
+
+### 📢 Campanhas
+
+* Criar campanha
+* Salvar contexto e prompt
+* Relacionar com workspace
+
+---
+
+### 🤖 Integração com IA (OpenAI)
+
+Criar função que:
+
+* Recebe dados do lead + campanha
+* Gera 2 a 3 mensagens personalizadas
+* Usa:
+
+  * nome
+  * empresa
+  * cargo
+  * contexto da campanha
+
+Exemplo de prompt:
+"Crie uma mensagem de prospecção para [nome] da empresa [empresa], usando um tom consultivo, com base no seguinte contexto: [contexto]"
+
+---
+
+### 💬 Mensagens
+
+* Endpoint para gerar mensagens
+* Endpoint para salvar mensagens no banco
+
+---
+
+### 🔥 Fluxo principal
+
+O sistema deve permitir:
+
+1. Usuário faz login
+2. Cria um workspace
+3. Cria um lead
+4. Cria uma campanha
+5. Clica em "gerar mensagem"
+6. Recebe 2-3 mensagens personalizadas
+
+---
+
+### ⚠️ Requisitos importantes
+
+* Código organizado
+* Tratamento básico de erros
+* Uso de async/await
+* Comentários explicando partes importantes
+
+---
+
+### 🌐 Frontend simples
+
+Criar uma interface básica (HTML ou React simples) com:
+
+* Login
+* Criar lead
+* Criar campanha
+* Botão "Gerar mensagem"
+* Exibir mensagens geradas
+
+---
+
+### 🔒 Segurança (básico)
+
+* Preparar estrutura para multi-workspace
+* Organizar código para suportar RLS no Supabase
+
+---
+
+### 🎯 Resultado esperado
+
+Aplicação funcional onde:
+
+* Dados são persistidos no Supabase
+* IA gera mensagens reais
+* Fluxo completo funciona
+
+---
