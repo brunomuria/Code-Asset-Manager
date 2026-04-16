@@ -1,10 +1,11 @@
 import { useEffect, useRef } from "react";
-import { ClerkProvider, SignIn, SignUp, Show, useClerk } from "@clerk/react";
 import { Switch, Route, useLocation, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { setAuthTokenGetter } from "@workspace/api-client-react";
 import AppLayout from "@/components/layout/AppLayout";
 
 import LandingPage from "@/pages/landing";
@@ -17,85 +18,42 @@ import FunnelSettingsPage from "@/pages/settings/funnel";
 import FieldsSettingsPage from "@/pages/settings/fields";
 import OnboardingPage from "@/pages/onboarding";
 import NotFound from "@/pages/not-found";
+import SignInPage from "@/pages/sign-in";
+import SignUpPage from "@/pages/sign-up";
 
 const queryClient = new QueryClient();
-
-const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-function stripBase(path: string): string {
-  return basePath && path.startsWith(basePath)
-    ? path.slice(basePath.length) || "/"
-    : path;
-}
-
-if (!clerkPubKey) {
-  throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY in .env file");
-}
-
-function SignInPage() {
-  // To update login providers, app branding, or OAuth settings use the Auth pane in the workspace toolbar.
-  return (
-    <div className="flex justify-center items-center min-h-screen bg-muted/30">
-      <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
-    </div>
-  );
-}
-
-function SignUpPage() {
-  // To update login providers, app branding, or OAuth settings use the Auth pane in the workspace toolbar.
-  return (
-    <div className="flex justify-center items-center min-h-screen bg-muted/30">
-      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
-    </div>
-  );
-}
-
-function ClerkQueryClientCacheInvalidator() {
-  const { addListener } = useClerk();
-  const queryClient = useQueryClient();
+function QueryCacheInvalidatorOnAuthChange() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
   const prevUserIdRef = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
-    const unsubscribe = addListener(({ user }) => {
-      const userId = user?.id ?? null;
-      if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== userId) {
-        queryClient.clear();
-      }
-      prevUserIdRef.current = userId;
-    });
-    return unsubscribe;
-  }, [addListener, queryClient]);
+    const userId = user?.id ?? null;
+    if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== userId) {
+      qc.clear();
+    }
+    prevUserIdRef.current = userId;
+  }, [user, qc]);
 
   return null;
 }
 
-function HomeRedirect() {
-  const [, setLocation] = useLocation();
+function AuthTokenWirer() {
+  const { getToken } = useAuth();
 
   useEffect(() => {
-    // Show renders its children conditionally, but we need an effect to navigate.
-    // However, it's simpler to just let Show render a component that redirects.
-  }, []);
+    setAuthTokenGetter(getToken);
+    return () => setAuthTokenGetter(null);
+  }, [getToken]);
 
-  return (
-    <>
-      <Show when="signed-in">
-        <RedirectToDashboard />
-      </Show>
-      <Show when="signed-out">
-        <LandingPage />
-      </Show>
-    </>
-  );
+  return null;
 }
 
-function RedirectToDashboard() {
+function RedirectTo({ path }: { path: string }) {
   const [, setLocation] = useLocation();
-  useEffect(() => {
-    setLocation("/dashboard");
-  }, [setLocation]);
+  useEffect(() => { setLocation(path); }, [path, setLocation]);
   return null;
 }
 
@@ -123,33 +81,42 @@ function AuthenticatedApp() {
   );
 }
 
-function ClerkProviderWithRoutes() {
-  const [, setLocation] = useLocation();
+function AppRoutes() {
+  const { user, isLoaded } = useAuth();
+
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Switch>
+        <Route path="/" component={LandingPage} />
+        <Route path="/sign-in" component={SignInPage} />
+        <Route path="/sign-up" component={SignUpPage} />
+        <Route>
+          <LandingPage />
+        </Route>
+      </Switch>
+    );
+  }
 
   return (
-    <ClerkProvider
-      publishableKey={clerkPubKey}
-      proxyUrl={clerkProxyUrl}
-      routerPush={(to) => setLocation(stripBase(to))}
-      routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
-    >
-      <QueryClientProvider client={queryClient}>
-        <ClerkQueryClientCacheInvalidator />
-        <Switch>
-          <Route path="/" component={HomeRedirect} />
-          <Route path="/sign-in/*?" component={SignInPage} />
-          <Route path="/sign-up/*?" component={SignUpPage} />
-          <Route path="/*">
-            <Show when="signed-in">
-              <AuthenticatedApp />
-            </Show>
-            <Show when="signed-out">
-              <LandingPage />
-            </Show>
-          </Route>
-        </Switch>
-      </QueryClientProvider>
-    </ClerkProvider>
+    <>
+      <AuthTokenWirer />
+      <Switch>
+        <Route path="/" component={() => <RedirectTo path="/dashboard" />} />
+        <Route path="/sign-in" component={() => <RedirectTo path="/dashboard" />} />
+        <Route path="/sign-up" component={() => <RedirectTo path="/dashboard" />} />
+        <Route path="/*">
+          <AuthenticatedApp />
+        </Route>
+      </Switch>
+    </>
   );
 }
 
@@ -157,7 +124,12 @@ function App() {
   return (
     <TooltipProvider>
       <WouterRouter base={basePath}>
-        <ClerkProviderWithRoutes />
+        <AuthProvider>
+          <QueryClientProvider client={queryClient}>
+            <QueryCacheInvalidatorOnAuthChange />
+            <AppRoutes />
+          </QueryClientProvider>
+        </AuthProvider>
       </WouterRouter>
       <Toaster />
     </TooltipProvider>

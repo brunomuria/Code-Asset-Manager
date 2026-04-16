@@ -10,12 +10,12 @@ Full-stack SDR CRM application built as a pnpm monorepo. Features multi-tenant w
 - **Node.js version**: 24
 - **Package manager**: pnpm
 - **TypeScript version**: 5.9
-- **API framework**: Express 5 + Clerk Auth (`@clerk/express`)
-- **Database**: PostgreSQL + Drizzle ORM
+- **API framework**: Express 5
+- **Database**: PostgreSQL + Drizzle ORM (primary: Supabase, fallback: Replit-provisioned DB)
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec in `lib/api-spec/openapi.yaml`)
 - **Frontend**: React + Vite + Tailwind CSS v4 + shadcn/ui
-- **Auth**: Clerk (ClerkProvider + requireAuth middleware)
+- **Auth**: Supabase Auth (AuthContext + Bearer token middleware)
 - **AI**: OpenAI via `@workspace/integrations-openai-ai-server`
 - **Build**: esbuild (ESM bundle for API server)
 
@@ -56,8 +56,11 @@ Default funnel stages seeded on workspace creation:
 ## Important Notes
 
 - After any Orval codegen run, check `lib/api-zod/src/index.ts` — it may be overwritten. It must only contain: `export * from "./generated/api";`
-- The API server uses Clerk JWT auth on all `/api/workspaces/*` routes via `requireAuth` middleware
-- Frontend uses `VITE_CLERK_PUBLISHABLE_KEY` and `VITE_CLERK_PROXY_URL` env vars
+- The API server verifies Supabase JWTs on all `/api/workspaces/*` routes via `requireAuth` middleware (uses `supabase.auth.getUser(token)`)
+- Frontend uses `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` env vars
+- Auth context: `artifacts/sdr-crm/src/contexts/AuthContext.tsx` (wraps `@supabase/supabase-js` auth)
+- Sign-in/sign-up pages: `artifacts/sdr-crm/src/pages/sign-in.tsx`, `sign-up.tsx`
+- Bearer token is injected into all API calls via `setAuthTokenGetter` wired to `supabase.auth.getSession()`
 - Workspace ID stored in `localStorage` key `sdr_workspace_id`
 
 ## Supabase Integration
