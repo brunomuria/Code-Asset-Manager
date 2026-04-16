@@ -4,20 +4,21 @@ import * as schema from "./schema";
 
 const { Pool } = pg;
 
+// Prefer Supabase DB if its schema has been applied, fall back to Replit-managed Postgres
 const connectionString =
   process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL;
 
 if (!connectionString) {
   throw new Error(
-    "SUPABASE_DATABASE_URL (or DATABASE_URL) must be set. Did you forget to configure the database?",
+    "DATABASE_URL must be set. Did you forget to configure the database?",
   );
 }
 
+const useSupabase = !!process.env.SUPABASE_DATABASE_URL;
+
 export const pool = new Pool({
   connectionString,
-  ssl: process.env.SUPABASE_DATABASE_URL
-    ? { rejectUnauthorized: false }
-    : undefined,
+  ssl: useSupabase ? { rejectUnauthorized: false } : undefined,
 });
 export const db = drizzle(pool, { schema });
 

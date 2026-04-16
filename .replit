@@ -37,4 +37,3 @@ externalPort = 3000
 SUPABASE_URL = "https://gwbqtuxpvuvvqxdizhpq.supabase.co"
 VITE_SUPABASE_URL = "https://gwbqtuxpvuvvqxdizhpq.supabase.co"
 VITE_SUPABASE_ANON_KEY = "sb_publishable_DB7vVxvmyuLcyAX2Jyp4Bg_XMkqZnQb"
-SUPABASE_DATABASE_URL = "postgresql://postgres.gwbqtuxpvuvvqxdizhpq:YW9%2B7P7i3b%2Fw%3FP%26@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
