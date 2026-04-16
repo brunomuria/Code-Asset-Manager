@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useListWorkspaces } from "@workspace/api-client-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useUser } from "@clerk/react";
 import { useLocation } from "wouter";
 
 interface Workspace {
@@ -20,7 +20,7 @@ interface WorkspaceContextType {
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
 
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
-  const { user, isLoaded: isUserLoaded } = useAuth();
+  const { user, isLoaded: isUserLoaded } = useUser();
   const [, setLocation] = useLocation();
   const [workspaceId, setWorkspaceIdState] = useState<string | null>(() => {
     return localStorage.getItem("sdr_workspace_id");
@@ -29,14 +29,14 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const { data: workspaces, isLoading: isWorkspacesLoading } = useListWorkspaces({
     query: {
       enabled: isUserLoaded && !!user,
-    },
+    }
   });
 
   useEffect(() => {
     if (isUserLoaded && user && workspaces && !isWorkspacesLoading) {
       if (workspaces.length === 0) {
         setLocation("/onboarding");
-      } else if (!workspaceId || !workspaces.find((w) => w.id === workspaceId)) {
+      } else if (!workspaceId || !workspaces.find(w => w.id === workspaceId)) {
         setWorkspaceId(workspaces[0].id);
       }
     }

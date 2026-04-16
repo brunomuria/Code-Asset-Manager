@@ -1,13 +1,13 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { useAuth } from "@/contexts/AuthContext";
-import {
-  LayoutDashboard,
-  Users,
-  Target,
-  Settings,
+import { useClerk, useUser } from "@clerk/react";
+import { 
+  LayoutDashboard, 
+  Users, 
+  Target, 
+  Settings, 
   LogOut,
-  Menu,
+  Menu
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,11 +21,12 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const { user, signOut } = useAuth();
+  const { signOut } = useClerk();
+  const { user } = useUser();
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -38,21 +39,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { name: "Custom Fields", href: "/settings/fields", icon: Settings },
   ];
 
-  const displayName = user?.user_metadata?.full_name
-    || user?.email?.split("@")[0]
-    || "User";
-  const initials = displayName.charAt(0).toUpperCase();
-
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <Sidebar>
           <SidebarHeader className="border-b border-sidebar-border px-6 py-4">
-            <h2 className="text-xl font-bold tracking-tight text-sidebar-primary-foreground">
-              SDR CRM
-            </h2>
+            <h2 className="text-xl font-bold tracking-tight text-sidebar-primary-foreground">SDR CRM</h2>
           </SidebarHeader>
-
+          
           <SidebarContent className="px-4 py-4 space-y-6">
             <div>
               <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">
@@ -101,15 +95,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 overflow-hidden">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback>{initials}</AvatarFallback>
+                  <AvatarImage src={user?.imageUrl} />
+                  <AvatarFallback>{user?.firstName?.charAt(0) || "U"}</AvatarFallback>
                 </Avatar>
                 <div className="overflow-hidden">
                   <p className="truncate text-sm font-medium text-sidebar-foreground">
-                    {user?.email}
+                    {user?.fullName || user?.primaryEmailAddress?.emailAddress}
                   </p>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={signOut}>
+              <Button variant="ghost" size="icon" onClick={() => signOut()}>
                 <LogOut className="h-4 w-4 text-sidebar-foreground/70 hover:text-sidebar-foreground" />
               </Button>
             </div>
@@ -123,7 +118,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </SidebarTrigger>
             <div className="font-semibold">SDR CRM</div>
           </header>
-          <div className="flex-1 overflow-auto">{children}</div>
+          <div className="flex-1 overflow-auto">
+            {children}
+          </div>
         </main>
       </div>
     </SidebarProvider>
