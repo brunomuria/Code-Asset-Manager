@@ -60,6 +60,23 @@ Default funnel stages seeded on workspace creation:
 - Frontend uses `VITE_CLERK_PUBLISHABLE_KEY` and `VITE_CLERK_PROXY_URL` env vars
 - Workspace ID stored in `localStorage` key `sdr_workspace_id`
 
+## Supabase Integration
+
+- **Project URL**: `https://gwbqtuxpvuvvqxdizhpq.supabase.co`
+- **Anon key**: stored in `SUPABASE_ANON_KEY` secret + `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` env vars
+- **Service role key**: stored in `SUPABASE_SERVICE_ROLE_KEY` secret
+- **Database**: `SUPABASE_DATABASE_URL` env var (Supabase Postgres pooler, port 6543)
+- **Client helpers**:
+  - Server-side (service role): `artifacts/api-server/src/lib/supabase.ts`
+  - Frontend (anon key): `artifacts/sdr-crm/src/lib/supabase.ts`
+- **Schema**: `supabase/schema.sql` — run in Supabase Dashboard → SQL Editor to create all tables
+- **Edge Functions** (deploy via Supabase CLI: `supabase functions deploy`):
+  - `supabase/functions/generate-message/` — AI message generation
+  - `supabase/functions/send-message/` — mark message sent + move lead stage
+
+### Applying the Schema
+Because Replit's sandbox cannot reach Supabase's direct Postgres host, run `supabase/schema.sql` manually in your Supabase Dashboard → SQL Editor. After that, set `SUPABASE_DATABASE_URL` to the session pooler URL and the API server will connect via `lib/db`.
+
 ## Workflows
 
 - `artifacts/api-server: API Server` — runs Express API on port from `PORT` env
