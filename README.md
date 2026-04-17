@@ -130,7 +130,7 @@ Essa separação é feita utilizando:
 ## 🌐 Aplicação Publicada
 
 🔗 Acesse a aplicação:
-https://replit.com/join/qbvyutaxzy-dnmuria
+https://code-asset-manager--dnmuria.replit.app
 
 ---
 
