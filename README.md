@@ -137,7 +137,7 @@ https://code-asset-manager--dnmuria.replit.app
 ## ▶️ Demonstração em Vídeo
 
 🎥 Assista ao vídeo:
-https://drive.google.com/file/d/1bcboqCcmqU9oc_f2kELtjGeXu5-1yA3s/view?usp=sharing
+https://drive.google.com/file/d/17NMNCE8eo2QglcVqr80eBwbj_tOV3Xru/view?usp=sharing
 
 ---
 
